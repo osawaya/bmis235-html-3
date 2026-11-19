@@ -51,6 +51,12 @@ p {
     line-height: 1.5;
 }
 
+ul {
+   color: #56687b;
+   text-align: center;
+   font-size: 18px;
+}
+   
 footer {
     text-align: center;
     font-size: 14px;
