@@ -36,7 +36,239 @@
      This box is empty on purpose. In Part 7 you paste an interactive
      graphic BETWEEN the opening <div> and the closing </div> below.
      ===================================================================== -->
-<div class="showcase"></div>
+<div class="showcase"><!-- HTML: Creates the animated travel showcase with route map, cities, and moving plane -->
+<div class="showcase-travel">
+  <div class="showcase-header">
+    <h3>My Top Travel Destinations</h3>
+  </div>
+
+  <div class="showcase-map">
+    <svg class="showcase-svg" viewBox="0 0 1000 450" preserveAspectRatio="xMidYMid meet">
+      <!-- Flight path -->
+      <path id="showcase-flight-path" fill="none" stroke="#92a2b3" stroke-width="4" stroke-dasharray="10 8"/>
+
+      <!-- City markers -->
+      <g class="showcase-city">
+        <circle cx="120" cy="220" r="8"></circle>
+        <text x="120" y="250">Seattle</text>
+      </g>
+
+      <g class="showcase-city">
+        <circle cx="230" cy="330" r="8"></circle>
+        <text x="230" y="360">Cabo</text>
+      </g>
+
+      <g class="showcase-city">
+        <circle cx="760" cy="170" r="8"></circle>
+        <text x="760" y="145">Rome</text>
+      </g>
+
+      <g class="showcase-city">
+        <circle cx="860" cy="240" r="8"></circle>
+        <text x="860" y="270">Beirut</text>
+      </g>
+
+      <!-- Plane -->
+      <g id="showcase-plane">
+        <text x="0" y="0">✈</text>
+      </g>
+    </svg>
+
+    <div class="showcase-status">
+      <span id="showcase-route-label">Seattle → Cabo</span>
+    </div>
+  </div>
+</div>
+
+<style>
+/* CSS: Styles only the showcase graphic and keeps all styles scoped */
+.showcase .showcase-travel,
+.showcase .showcase-travel * {
+  box-sizing: border-box;
+  font-family: Constantia, serif;
+}
+
+.showcase .showcase-travel {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #f7f9fb, #eef2f5);
+  border: 2px solid #92a2b3;
+  border-radius: 16px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.showcase .showcase-header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.showcase .showcase-header h3 {
+  margin: 0;
+  color: #56687b;
+  font-size: clamp(1.1rem, 2vw, 1.6rem);
+}
+
+.showcase .showcase-map {
+  position: relative;
+  height: 380px;
+  max-height: 380px;
+}
+
+.showcase .showcase-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.showcase .showcase-city circle {
+  fill: #56687b;
+  stroke: #92a2b3;
+  stroke-width: 3;
+}
+
+.showcase .showcase-city text {
+  fill: #56687b;
+  font-size: 22px;
+  font-weight: bold;
+  text-anchor: middle;
+}
+
+.showcase #showcase-flight-path {
+  opacity: 0.9;
+}
+
+.showcase #showcase-plane text {
+  fill: #56687b;
+  font-size: 34px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.showcase .showcase-status {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  background: rgba(86,104,123,0.92);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .showcase .showcase-map {
+    height: 300px;
+  }
+
+  .showcase .showcase-city text {
+    font-size: 18px;
+  }
+
+  .showcase #showcase-plane text {
+    font-size: 28px;
+  }
+}
+</style>
+
+<script>
+/* JavaScript: Draws the route and continuously animates the plane between destinations */
+
+(function () {
+  const plane = document.getElementById("showcase-plane");
+  const routeLabel = document.getElementById("showcase-route-label");
+  const path = document.getElementById("showcase-flight-path");
+
+  const cities = {
+    Seattle: { x: 120, y: 220 },
+    Cabo: { x: 230, y: 330 },
+    Rome: { x: 760, y: 170 },
+    Beirut: { x: 860, y: 240 }
+  };
+
+  const sequence = [
+    ["Seattle", "Cabo"],
+    ["Cabo", "Seattle"],
+    ["Seattle", "Rome"],
+    ["Rome", "Seattle"],
+    ["Seattle", "Beirut"],
+    ["Beirut", "Seattle"]
+  ];
+
+  let segmentIndex = 0;
+  const segmentDuration = 4500;
+
+  function createCurve(a, b) {
+    const midX = (a.x + b.x) / 2;
+    const curveHeight = Math.min(a.y, b.y) - 120;
+
+    return `M ${a.x} ${a.y}
+            Q ${midX} ${curveHeight}
+            ${b.x} ${b.y}`;
+  }
+
+  function ease(t) {
+    return 0.5 - Math.cos(t * Math.PI) / 2;
+  }
+
+  function startSegment() {
+    const [fromName, toName] = sequence[segmentIndex];
+
+    routeLabel.textContent = fromName + " → " + toName;
+
+    const from = cities[fromName];
+    const to = cities[toName];
+
+    const d = createCurve(from, to);
+    path.setAttribute("d", d);
+
+    const tempPath = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path"
+    );
+    tempPath.setAttribute("d", d);
+
+    const totalLength = tempPath.getTotalLength();
+    const startTime = performance.now();
+
+    function animate(now) {
+      let progress = (now - startTime) / segmentDuration;
+
+      if (progress > 1) progress = 1;
+
+      const point = tempPath.getPointAtLength(
+        totalLength * ease(progress)
+      );
+
+      const ahead = tempPath.getPointAtLength(
+        Math.min(totalLength, totalLength * ease(progress) + 2)
+      );
+
+      const angle =
+        Math.atan2(ahead.y - point.y, ahead.x - point.x) *
+        (180 / Math.PI);
+
+      plane.setAttribute(
+        "transform",
+        `translate(${point.x},${point.y}) rotate(${angle})`
+      );
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        segmentIndex = (segmentIndex + 1) % sequence.length;
+        startSegment();
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  startSegment();
+})();
+</script></div>
 
 <!-- Footer: fill in your name -->
 <footer>Built by Olivia Sawaya &middot; BMIS 235</footer>
