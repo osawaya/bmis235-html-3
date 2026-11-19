@@ -44,6 +44,12 @@ h1 {
     font-size: 40px;
 }
 
+h2 {
+   color: #56687b;
+    text-align: center;
+    font-size: 30px;
+}
+
   .center-img {
     display: block;
     margin-left: auto;
