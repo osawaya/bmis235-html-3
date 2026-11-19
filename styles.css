@@ -52,6 +52,7 @@ p {
 }
 
 ul {
+   max-width: 500px;
    color: #56687b;
    text-align: center;
    font-size: 18px;
